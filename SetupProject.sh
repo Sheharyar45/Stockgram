@@ -2,3 +2,7 @@ mvn archetype:generate -DgroupId=cs.toronto.edu -DartifactId=pgsample -Darchetyp
 cp Main.xml pgsample/pom.xml
 cp Main.java pgsample/src/main/java/cs/toronto/edu/
 rm pgsample/src/main/java/cs/toronto/edu/App.java
+# Copy service classes
+mkdir -p pgsample/src/main/java/cs/toronto/edu/db
+cp service/AuthService.java pgsample/src/main/java/cs/toronto/edu/
+cp db/DBConnection.java pgsample/src/main/java/cs/toronto/edu/db/
