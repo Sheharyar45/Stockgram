@@ -1,3 +1,6 @@
-/data/Java/pgsample/src/main/java/cs/toronto/edu/AuthService.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/Menu.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/service/AuthService.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/model/FriendsModel.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/service/FriendsService.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/db/DBConnection.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/Main.java

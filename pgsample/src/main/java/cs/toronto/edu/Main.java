@@ -37,7 +37,8 @@ public class Main {
 
                         if (userId != null) {
                             System.out.println("Login successful!");
-                            // Menu.show(userId);
+                            
+                            Menu.show(userId);
                             // if you want to stop showing main menu after successful login, set running = false;
                         } else {
                             System.out.println("Invalid login. Try again.");
