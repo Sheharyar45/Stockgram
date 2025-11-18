@@ -17,8 +17,9 @@ public class FriendsService {
             System.out.println("3. View outgoing friend requests");
             System.out.println("4. Send friend request");
             System.out.println("5. Accept friend request");
-            System.out.println("6. Remove friend");
-            System.out.println("7. Back");
+            System.out.println("6. Decline friend request");
+            System.out.println("7. Remove friend");
+            System.out.println("8. Back");
             System.out.print("Choose an option: ");
 
             String input = scanner.nextLine();
@@ -40,9 +41,13 @@ public class FriendsService {
                     acceptFriendRequest(userId, scanner);
                     break;
                 case "6":
-                    removeFriend(userId, scanner);
+                    // Decline friend request, use random function
+                    declineFriendRequest(userId, scanner);
                     break;
                 case "7":
+                    removeFriend(userId, scanner);
+                    break;
+                case "8":
                     running = false;
                     break;
                 default:
@@ -123,6 +128,11 @@ public class FriendsService {
             return;
         }
 
+        if (!FriendsModel.canSendRequest(userId, otherId)) {
+            System.out.println("You cannot send a friend request to this user yet. Please wait before trying again.");
+            return;
+        }
+
         if (FriendsModel.sendFriendRequest(userId, otherId)) {
             System.out.println("Friend request sent.");
         } else {
@@ -148,6 +158,29 @@ public class FriendsService {
 
         if (FriendsModel.acceptFriendRequest(userId, requester)) {
             System.out.println("Friend request accepted.");
+        } else {
+            System.out.println("No pending request from this user.");
+        }
+    }
+
+    private static void declineFriendRequest(int userId, Scanner scanner) {
+        System.out.print("Enter the username of the requester, or 0 to cancel: ");
+        String requesterUsername = scanner.nextLine();
+
+        if (requesterUsername.equals("0")) {
+            System.out.println("Cancelled declining friend request.");
+            return;
+        }
+
+        Integer requester = FriendsModel.getUserIdByUsername(requesterUsername);
+        
+        if (requester == null) {
+            System.out.println("User not found.");
+            return;
+        }
+
+        if (FriendsModel.declineFriendRequest(userId, requester)) {
+            System.out.println("Friend request declined.");
         } else {
             System.out.println("No pending request from this user.");
         }

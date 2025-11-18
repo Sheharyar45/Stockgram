@@ -138,7 +138,7 @@ public class FriendsModel {
         try (Connection conn = DBConnection.getConnection()) {
             String sql =
                 "SELECT * FROM friendrequest " +
-                "WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)";
+                "WHERE (sender = ? AND receiver = ? AND status = 'pending') OR (sender = ? AND receiver = ? AND status = 'pending')";
             
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -182,7 +182,7 @@ public class FriendsModel {
         try (Connection conn = DBConnection.getConnection()) {
             // Update request status
             String sql =
-                "UPDATE friendrequest SET status='accepted' " +
+                "UPDATE friendrequest SET status='accepted' , last_updated_time = NOW() " +
                 "WHERE sender = ? AND receiver = ? AND status='pending'";
 
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -210,6 +210,54 @@ public class FriendsModel {
         }
         
         return false;
+    }
+
+    public static boolean declineFriendRequest(int userId, int requester) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql =
+                "UPDATE friendrequest SET status='rejected' , last_updated_time = NOW() " +
+                "WHERE sender = ? AND receiver = ? AND status='pending'";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, requester);
+            ps.setInt(2, userId);
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+
+    public static boolean canSendRequest(int userId, int otherId) {
+        try (Connection conn = DBConnection.getConnection()) {
+            // Check if there's a recent rejection or deletion cooldown
+            String sql =
+                "SELECT * FROM friendrequest " +
+                "WHERE (sender = ? AND receiver = ?) AND status='rejected' " +
+                "AND CURRENT_TIMESTAMP - last_updated_time < INTERVAL '5 minutes'";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ps.setInt(2, otherId);
+
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return false; // Still in cooldown
+            }
+
+            // Check for deletion cooldown
+            
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return true;
     }
 
     
@@ -240,6 +288,16 @@ public class FriendsModel {
                 psReq.setInt(3, otherId);
                 psReq.setInt(4, userId);
                 psReq.executeUpdate();
+
+                // insert a rejected request to enfore cooldown , sender is the deleted user
+                String sqlCooldown =
+                    "INSERT INTO friendrequest (sender, receiver, status, last_updated_time) VALUES (?, ?, 'rejected', NOW()) " +
+                    "ON CONFLICT DO NOTHING";
+                
+                PreparedStatement psCooldown = conn.prepareStatement(sqlCooldown);
+                psCooldown.setInt(1, otherId);
+                psCooldown.setInt(2, userId);
+                psCooldown.executeUpdate();
                 
                 return true;
             }
