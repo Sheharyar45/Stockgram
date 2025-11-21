@@ -160,8 +160,8 @@ public class FriendsModel {
     public static boolean sendFriendRequest(int userId, int otherId) {
         try (Connection conn = DBConnection.getConnection()) {
             String sql =
-                "INSERT INTO friendrequest (sender, receiver, status) VALUES (?, ?, 'pending') " +
-                "ON CONFLICT DO NOTHING";
+                "INSERT INTO friendrequest (sender, receiver, status, last_updated_time) VALUES (?, ?, 'pending', NOW()) " +
+                "ON CONFLICT (sender, receiver) DO UPDATE SET status = 'pending', last_updated_time = NOW()";
 
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);

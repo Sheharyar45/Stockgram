@@ -41,7 +41,7 @@ public class Menu {
 
                 case "3":
                     System.out.println("Opening Portfolios...");
-                    // PortfolioService.menu(userId);
+                    PortfolioService.menu(userId);
                     break;
 
                 case "4":
