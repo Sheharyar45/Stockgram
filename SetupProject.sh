@@ -13,3 +13,4 @@ cp db/DBConnection.java pgsample/src/main/java/cs/toronto/edu/db/
 cp service/FriendsService.java pgsample/src/main/java/cs/toronto/edu/service/
 cp service/PortfolioService.java pgsample/src/main/java/cs/toronto/edu/service/
 cp model/PortfolioModel.java pgsample/src/main/java/cs/toronto/edu/model/
+cp model/StockModel.java pgsample/src/main/java/cs/toronto/edu/model/

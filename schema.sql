@@ -21,6 +21,7 @@ CREATE TABLE users (
 CREATE TABLE portfolios (
     portfolio_id SERIAL PRIMARY KEY,
     cash_amount REAL NOT NULL DEFAULT 0,
+    investment REAL NOT NULL DEFAULT 0,
     user_id INTEGER NOT NULL REFERENCES users(user_id),
     name TEXT NOT NULL,
     CONSTRAINT unique_userid_name UNIQUE (user_id, name)
@@ -44,9 +45,6 @@ CREATE TABLE transactions (
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
 
     CHECK (type IN ('Deposit', 'Withdraw', 'Buy', 'Sell')),
-
-    FOREIGN KEY (stock_symbol, timestamp)
-        REFERENCES historicdata(stock_symbol, timestamp)
 );
 
 

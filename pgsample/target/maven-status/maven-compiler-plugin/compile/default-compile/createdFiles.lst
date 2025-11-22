@@ -2,6 +2,7 @@ cs/toronto/edu/PortfolioService.class
 cs/toronto/edu/model/FriendsModel.class
 cs/toronto/edu/Menu.class
 cs/toronto/edu/model/PortfolioModel.class
+cs/toronto/edu/model/StockModel.class
 cs/toronto/edu/AuthService.class
 cs/toronto/edu/db/DBConnection.class
 cs/toronto/edu/Main.class

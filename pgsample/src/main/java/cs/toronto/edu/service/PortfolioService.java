@@ -3,19 +3,21 @@ import cs.toronto.edu.model.PortfolioModel;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import cs.toronto.edu.model.StockModel;
+
 
 
 public class PortfolioService {
 
     public static void menu(int userId) {
         Scanner sc = new Scanner(System.in);
-        boolean running = true;
+        boolean on = true;
 
-        while (running) {
-            System.out.println("\n===== PORTFOLIO MENU =====");
+        while (on) {
+            System.out.println("\n----- PORTFOLIO MENU -----");
             System.out.println("1. View my portfolios");
             System.out.println("2. Create new portfolio");
-            System.out.println("3. Select portfolio");
+            System.out.println("3. Open portfolio");
             System.out.println("4. Back");
             System.out.print("Choose an option: ");
 
@@ -29,10 +31,10 @@ public class PortfolioService {
                     createPortfolio(userId, sc);
                     break;
                 case "3":
-                    selectPortfolio(userId, sc);
+                    openPortfolio(userId, sc);
                     break;
                 case "4":
-                    running = false;
+                    on = false;
                     break;
                 default:
                     System.out.println("Invalid choice.");
@@ -40,19 +42,25 @@ public class PortfolioService {
         }
     }
 
-    // create portfolio
     private static void createPortfolio(int userId, Scanner sc) {
         System.out.print("Enter new portfolio name: ");
         String portfolioName = sc.nextLine();
         try {
             if(PortfolioModel.createPortfolio(userId, portfolioName)) {
                 System.out.println("Portfolio created successfully.");
-                // ask if they want to deposit initial cash
                 System.out.print("Do you want to deposit initial cash? (y/n): ");
                 String choice = sc.nextLine();
                 if (choice.equalsIgnoreCase("y")) {
-                    // PortfolioModel.depositInitialCash(userId, portfolioName, sc);
-                    System.out.println("Initial cash deposited.");
+                    int portfolioId = PortfolioModel.getPortfolioIdByName(userId, portfolioName);
+                    if(portfolioId == -1) {
+                        System.out.println("Error getting portfolio ID.");
+                        return;
+                    }
+                    if (PortfolioModel.deposit(portfolioId, sc)) {
+                        System.out.println("Initial cash added, you can now manage your portfolio.");
+                    } else {
+                        System.out.println("Failed to deposit initial cash.");
+                    }
                     return;
                 }
                 else if (choice.equalsIgnoreCase("n")) {
@@ -76,7 +84,7 @@ public class PortfolioService {
 
 
 
-    private static void selectPortfolio(int userId, Scanner sc) {
+    private static void openPortfolio(int userId, Scanner sc) {
         System.out.print("Enter Portfolio name to select or 1 to go back: ");
         String portfolioName = sc.nextLine();
         if (portfolioName.equals("1")) {
@@ -99,6 +107,7 @@ public class PortfolioService {
         // int portfolioId = PortfolioModel.getPortfolioIdByName(portfolioName);
         Scanner sc = new Scanner(System.in);
         boolean running = true;
+        StockModel stockModel = new StockModel();
 
         while (running) {
             System.out.println("\n===== PORTFOLIO ACTIONS =====");
@@ -116,19 +125,27 @@ public class PortfolioService {
 
             switch (sc.nextLine()) {
                 case "1":
-                    // PortfolioModel.deposit(portfolioId, sc);
+                    if (!PortfolioModel.deposit(portfolioId, sc)) {
+                        System.out.println("Failed to deposit cash.");
+                    }
                     break;
                 case "2":
-                    // PortfolioModel.withdraw(portfolioId, sc);
+                    if (!PortfolioModel.withdraw(portfolioId, sc)) {
+                        System.out.println("Failed to withdraw cash.");
+                    }
                     break;
                 case "3":
-                    // PortfolioModel.buyStock(portfolioId, sc);
+                    if (!PortfolioModel.buyStock(portfolioId, sc, stockModel)) {
+                        System.out.println("Failed to buy stock.");
+                    }
                     break;
                 case "4":
-                    // PortfolioModel.sellStock(portfolioId, sc);
+                    if (!PortfolioModel.sellStock(portfolioId, sc, stockModel)) {
+                        System.out.println("Failed to sell stock.");
+                    }
                     break;
                 case "5":
-                    // PortfolioModel.viewHoldings(portfolioId);
+                    PortfolioModel.viewHoldings(portfolioId, stockModel);
                     break;
                 case "6":
                     // PortfolioCalculations.showMarketValue(portfolioId);
