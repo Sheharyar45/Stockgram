@@ -56,8 +56,8 @@ public class PortfolioService {
                         System.out.println("Error getting portfolio ID.");
                         return;
                     }
-                    if (PortfolioModel.deposit(portfolioId, sc)) {
-                        System.out.println("Initial cash added, you can now manage your portfolio.");
+                    if (deposit(portfolioId, sc, userId)) {
+                        System.out.println("Initial cash deposited successfully.");
                     } else {
                         System.out.println("Failed to deposit initial cash.");
                     }
@@ -94,7 +94,7 @@ public class PortfolioService {
             int portfolioId = PortfolioModel.getPortfolioIdByName(userId, portfolioName);
             if (portfolioId != -1) {
                 PortfolioModel.viewPortfolioDetails(portfolioId, portfolioName);
-                portfolioMenu(portfolioId);
+                portfolioMenu(portfolioId, userId);
             } else {
                 System.out.println("You do not own a portfolio with that name.");
             }
@@ -103,7 +103,75 @@ public class PortfolioService {
         }
     }
 
-    private static void portfolioMenu(int portfolioId) {
+    private static boolean deposit(int portfolioId, Scanner sc, int userId) {
+        System.out.print("Amount to deposit: ");
+        double amount = Double.parseDouble(sc.nextLine());
+        if (amount <= 0) {
+            System.out.println("Deposit amount must be positive.");
+            return false;
+        }
+        System.out.print("Deposit from (1) Bank or (2) Another Portfolio? Enter 1 or 2: ");
+        String choice = sc.nextLine();
+        if (choice.equals("2")) {
+            System.out.print("Enter source Portfolio name: ");
+            String sourceName = sc.nextLine();
+            int sourceId = PortfolioModel.getPortfolioIdByName(userId, sourceName);
+            if(sourceId == -1) {
+                System.out.println("Portfolio not found.");
+                return false;
+            }
+            if (!PortfolioModel.withdraw(sourceId, amount) ||
+                !PortfolioModel.deposit(portfolioId, amount)) {
+                System.out.println("Failed to transfer funds from source portfolio.");
+                return false;
+            }
+        } else if (choice.equals("1")) {
+            if (!PortfolioModel.deposit(portfolioId, amount)) {
+                System.out.println("Failed to deposit cash.");
+                return false;
+            }
+        } else {
+            System.out.println("Invalid choice.");
+            return false;
+        }
+        return true; 
+    }
+
+    private static boolean withdraw(int portfolioId, Scanner sc, int userId) {
+        System.out.print("Amount to withdraw: ");
+        double amount = Double.parseDouble(sc.nextLine());
+        if (amount <= 0) {
+            System.out.println("Withdrawal amount must be positive.");
+            return false;
+        }
+        System.out.print("Are you withdrawing to (1) Bank or (2) Another Portfolio? Enter 1 or 2: ");
+        String choice = sc.nextLine();
+        if (choice.equals("2")) {
+            System.out.print("Enter destination Portfolio name: ");
+            String destName = sc.nextLine();
+            int destId = PortfolioModel.getPortfolioIdByName(userId, destName);
+            if(destId == -1) {
+                System.out.println("Portfolio not found.");
+                return false;
+            }
+            if (!PortfolioModel.withdraw(portfolioId, amount) ||
+                !PortfolioModel.deposit(destId, amount)) {
+                System.out.println("Failed to transfer funds to destination portfolio.");
+                return false;
+            }
+        } else if (choice.equals("1")) {
+            if (!PortfolioModel.withdraw(portfolioId, amount)) {
+                System.out.println("Failed to withdraw cash.");
+                return false;
+            }
+        } else {
+            System.out.println("Invalid choice.");
+            return false;
+        }
+        return true; 
+    }
+
+    private static void portfolioMenu(int portfolioId, int userId) {
         // int portfolioId = PortfolioModel.getPortfolioIdByName(portfolioName);
         Scanner sc = new Scanner(System.in);
         boolean running = true;
@@ -115,7 +183,7 @@ public class PortfolioService {
             System.out.println("2. Withdraw cash");
             System.out.println("3. Buy stock");
             System.out.println("4. Sell stock");
-            System.out.println("5. View holdings");
+            System.out.println("5. View holdings and cash balance");
             System.out.println("6. View market value");
             System.out.println("7. View historical performance");
             System.out.println("8. View predictions");
@@ -125,14 +193,10 @@ public class PortfolioService {
 
             switch (sc.nextLine()) {
                 case "1":
-                    if (!PortfolioModel.deposit(portfolioId, sc)) {
-                        System.out.println("Failed to deposit cash.");
-                    }
+                    deposit(portfolioId, sc, userId);   
                     break;
                 case "2":
-                    if (!PortfolioModel.withdraw(portfolioId, sc)) {
-                        System.out.println("Failed to withdraw cash.");
-                    }
+                    withdraw(portfolioId, sc, userId);
                     break;
                 case "3":
                     if (!PortfolioModel.buyStock(portfolioId, sc, stockModel)) {

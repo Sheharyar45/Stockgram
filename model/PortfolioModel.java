@@ -127,14 +127,7 @@ public class PortfolioModel {
         }
     }
 
-    public static boolean deposit(int portfolioId, Scanner sc) {
-        System.out.print("Amount to deposit: ");
-        double amount = Double.parseDouble(sc.nextLine());
-        if (amount <= 0) {
-            System.out.println("Deposit amount must be positive.");
-            return false;
-        }
-
+    public static boolean deposit(int portfolioId, double amount) {
         String add = "UPDATE Portfolios SET cash_amount = cash_amount + ?, investment = investment + ? WHERE portfolio_id = ?";
         String tc = "INSERT INTO Transactions(portfolio_id, type, amount, timestamp) VALUES (?, 'Deposit', ?, NOW())";
 
@@ -159,14 +152,7 @@ public class PortfolioModel {
         }
     }
 
-    public static boolean withdraw(int portfolioId, Scanner sc) {
-        System.out.print("Amount to withdraw: ");
-        double amount = Double.parseDouble(sc.nextLine());
-        if (amount <= 0) {
-            System.out.println("Withdrawal amount must be positive.");
-            return false;
-        }
-
+    public static boolean withdraw(int portfolioId, double amount) {
         String remove = "UPDATE Portfolios SET cash_amount = cash_amount - ? WHERE portfolio_id = ? AND cash_amount >= ?";
         String tc = "INSERT INTO Transactions(portfolio_id, type, amount, timestamp) VALUES (?, 'Withdraw', ?, NOW())";
 
@@ -353,6 +339,7 @@ public class PortfolioModel {
             stmt.setInt(1, portfolioId);
             ResultSet rs = stmt.executeQuery();
             System.out.println("\n----- PORTFOLIO HOLDINGS -----");
+            System.out.println("Cash Balance: $" + getCashAmount(portfolioId));
             boolean found = false;
             while (rs.next()) {
                 found = true;
