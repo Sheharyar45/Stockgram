@@ -10,12 +10,12 @@ import cs.toronto.edu.db.DBConnection;
 public class PortfolioModel {
 
     public static void viewPortfolios(int userId) {
-        String query = "SELECT name, cash_amount FROM Portfolios WHERE user_id = ?";
+        String q = "SELECT name, cash_amount FROM Portfolios WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(query)) {
+            PreparedStatement stmt = conn.prepareStatement(q)) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
-            System.out.println("\n===== YOUR PORTFOLIOS =====");
+            System.out.println("\n----- YOUR PORTFOLIOS -----");
             boolean found = false;
             while (rs.next()) {
                 found = true;
@@ -30,7 +30,7 @@ public class PortfolioModel {
     }
 
     public static boolean createPortfolio(int userId, String portfolioName) {
-        // check if portfolio with same name exists for user
+        // check if portfolio with same name owned byuser
         String name = portfolioName.trim();
         if (name.isEmpty()) {
             System.out.println("Portfolio name cannot be empty.");

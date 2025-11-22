@@ -9,13 +9,13 @@ public class PortfolioService {
 
     public static void menu(int userId) {
         Scanner sc = new Scanner(System.in);
-        boolean running = true;
+        boolean on = true;
 
-        while (running) {
-            System.out.println("\n===== PORTFOLIO MENU =====");
+        while (on) {
+            System.out.println("\n----- PORTFOLIO MENU -----");
             System.out.println("1. View my portfolios");
             System.out.println("2. Create new portfolio");
-            System.out.println("3. Select portfolio");
+            System.out.println("3. Open portfolio");
             System.out.println("4. Back");
             System.out.print("Choose an option: ");
 
@@ -29,10 +29,10 @@ public class PortfolioService {
                     createPortfolio(userId, sc);
                     break;
                 case "3":
-                    selectPortfolio(userId, sc);
+                    openPortfolio(userId, sc);
                     break;
                 case "4":
-                    running = false;
+                    on = false;
                     break;
                 default:
                     System.out.println("Invalid choice.");
@@ -40,14 +40,12 @@ public class PortfolioService {
         }
     }
 
-    // create portfolio
     private static void createPortfolio(int userId, Scanner sc) {
         System.out.print("Enter new portfolio name: ");
         String portfolioName = sc.nextLine();
         try {
             if(PortfolioModel.createPortfolio(userId, portfolioName)) {
                 System.out.println("Portfolio created successfully.");
-                // ask if they want to deposit initial cash
                 System.out.print("Do you want to deposit initial cash? (y/n): ");
                 String choice = sc.nextLine();
                 if (choice.equalsIgnoreCase("y")) {
@@ -76,7 +74,7 @@ public class PortfolioService {
 
 
 
-    private static void selectPortfolio(int userId, Scanner sc) {
+    private static void openPortfolio(int userId, Scanner sc) {
         System.out.print("Enter Portfolio name to select or 1 to go back: ");
         String portfolioName = sc.nextLine();
         if (portfolioName.equals("1")) {
