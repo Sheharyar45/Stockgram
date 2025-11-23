@@ -6,5 +6,7 @@ cs/toronto/edu/model/StockModel.class
 cs/toronto/edu/AuthService.class
 cs/toronto/edu/StockService.class
 cs/toronto/edu/db/DBConnection.class
+cs/toronto/edu/model/StocklistModel.class
 cs/toronto/edu/Main.class
 cs/toronto/edu/FriendsService.class
+cs/toronto/edu/StocklistService.class

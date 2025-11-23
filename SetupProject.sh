@@ -15,3 +15,5 @@ cp service/PortfolioService.java pgsample/src/main/java/cs/toronto/edu/service/
 cp model/PortfolioModel.java pgsample/src/main/java/cs/toronto/edu/model/
 cp model/StockModel.java pgsample/src/main/java/cs/toronto/edu/model/
 cp service/StockService.java pgsample/src/main/java/cs/toronto/edu/service/
+cp model/StocklistModel.java pgsample/src/main/java/cs/toronto/edu/model/
+cp service/StocklistService.java pgsample/src/main/java/cs/toronto/edu/service/

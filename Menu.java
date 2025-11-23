@@ -2,6 +2,7 @@ package cs.toronto.edu;
 
 import java.util.Scanner;
 
+
 public class Menu {
 
     public static void show(int userId) {
@@ -50,7 +51,7 @@ public class Menu {
 
                 case "5":
                     System.out.println("Opening Stocklists...");
-                    // StocklistService.menu(userId);
+                    StocklistService.menu(userId);
                     break;
 
                 case "6":
