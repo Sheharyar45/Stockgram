@@ -42,14 +42,15 @@ public class StockModel{
         return stockPrices;
     }
 
-    public static void getHistory(String symbol) {
+    public static void getHistory(String symbol, int days) {
         String query = "SELECT timestamp, open, high, low, close, volume " +
-                       "FROM historicdata WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT 30";
+                       "FROM historicdata WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             
             stmt.setString(1, symbol);
+            stmt.setInt(2, days);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.isBeforeFirst()) {
                     System.out.println("No historical data found for stock: " + symbol);
@@ -60,7 +61,7 @@ public class StockModel{
                                   "Timestamp", "Open", "High", "Low", "Close", "Volume");
                 while (rs.next()) {
                     System.out.printf("%-20s $%-9.2f $%-9.2f $%-9.2f $%-9.2f %-10d%n",
-                                      rs.getTimestamp("timestamp").toString(),
+                                      rs.getDate("timestamp").toString(),
                                       rs.getDouble("open"),
                                       rs.getDouble("high"),
                                       rs.getDouble("low"),

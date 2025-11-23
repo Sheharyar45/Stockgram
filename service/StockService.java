@@ -57,7 +57,22 @@ public class StockService {
     private static void searchStock(Scanner sc) {
         System.out.print("Enter stock symbol: ");
         String symbol = sc.nextLine().trim().toUpperCase();
-        StockModel.getHistory(symbol);
+        // ask for interval x amount of: day , week , month , year
+        System.out.println("Enter the interval for historical data in the format <amount> <unit> (e.g., 30d, 4w, 6m, 1y) = (30 days, 4 weeks, 6 months, 1 year): ");
+        String interval = sc.nextLine().trim().toLowerCase();
+        if (!interval.matches("\\d+[dwmy]")) {
+            System.out.println("Invalid interval format.");
+            return;
+        }
+        int amount = Integer.parseInt(interval.substring(0, interval.length() - 1));
+        char unit = interval.charAt(interval.length() - 1);
+        System.out.printf("Fetching last %d %s of data for %s...\n", amount,
+                          unit == 'd' ? "days" : unit == 'w' ? "weeks" : unit == 'm' ? "months" : "years", symbol);
+        int days = unit == 'd' ? amount :
+                   unit == 'w' ? amount * 7 :
+                   unit == 'm' ? amount * 30 :
+                   unit == 'y' ? amount * 365 : amount;
+        StockModel.getHistory(symbol, days);
     }
 
     private static void addStockData(Scanner sc) {
