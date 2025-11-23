@@ -119,3 +119,15 @@ CREATE TABLE requestreview (
     PRIMARY KEY (sender, receiver, stocklist_id),
 );
 
+CREATE TABLE newstockdata (
+    stock_symbol VARCHAR(5) NOT NULL,
+    timestamp DATE NOT NULL,
+    open REAL,
+    high REAL,
+    low REAL,
+    close REAL,
+    volume INTEGER,
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+
+    PRIMARY KEY (stock_symbol, timestamp, user_id)
+);

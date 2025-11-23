@@ -1,6 +1,7 @@
 package cs.toronto.edu;
 import java.util.List;
 import java.util.Map;
+import java.sql.Date;
 import java.util.Scanner;
 import cs.toronto.edu.model.StockModel;
 
@@ -8,7 +9,7 @@ public class StockService {
 
     public static void menu(int userId) {
         Scanner sc = new Scanner(System.in);
-        StockModel stockModel = new StockModel();
+        StockModel stockModel = new StockModel(userId);
         boolean running = true;
 
         while (running) {
@@ -26,12 +27,11 @@ public class StockService {
                     viewAllStocks(stockModel);
                     break;
                 case "2":
-                    searchStock(sc);
+                    searchStock(sc, stockModel);
                     break;
                 case "3":
-                    addStockData(sc);
-                    // Refresh model to reflect potential new latest prices
-                    stockModel = new StockModel();
+                    addStockData(sc, stockModel);
+                    
                     break;
                 case "4":
                     running = false;
@@ -54,7 +54,7 @@ public class StockService {
         }
     }
 
-    private static void searchStock(Scanner sc) {
+    private static void searchStock(Scanner sc, StockModel model) {
         System.out.print("Enter stock symbol: ");
         String symbol = sc.nextLine().trim().toUpperCase();
         // ask for interval x amount of: day , week , month , year
@@ -72,37 +72,40 @@ public class StockService {
                    unit == 'w' ? amount * 7 :
                    unit == 'm' ? amount * 30 :
                    unit == 'y' ? amount * 365 : amount;
-        StockModel.getHistory(symbol, days);
+        model.getHistory(symbol, days);
     }
 
-    private static void addStockData(Scanner sc) {
-    //     try {
-    //         System.out.print("Symbol: ");
-    //         String symbol = sc.nextLine().trim().toUpperCase();
-    //         System.out.print("Date (YYYY-MM-DD): ");
-    //         String dateStr = sc.nextLine();
-    //         Date date = Date.valueOf(dateStr);
+    private static void addStockData(Scanner sc, StockModel model) {
+        try {
+            System.out.print("Symbol: ");
+            String symbol = sc.nextLine().trim().toUpperCase();
+            System.out.print("Date (YYYY-MM-DD): ");
+            String dateStr = sc.nextLine();
+            Date date = Date.valueOf(dateStr);
+            System.out.print("Open: ");
+            double open = Double.parseDouble(sc.nextLine());
+            System.out.print("High: ");
+            double high = Double.parseDouble(sc.nextLine());
+            System.out.print("Low: ");
+            double low = Double.parseDouble(sc.nextLine());
+            System.out.print("Close: ");
+            double close = Double.parseDouble(sc.nextLine());
+            System.out.print("Volume: ");
+            int volume = Integer.parseInt(sc.nextLine());
+            if(open < 0 || high < 0 || low < 0 || close < 0 || volume < 0) {
+                System.out.println("Stock prices and volume must be non-negative.");
+                return;
+            }
 
-    //         System.out.print("Open: ");
-    //         double open = Double.parseDouble(sc.nextLine());
-    //         System.out.print("High: ");
-    //         double high = Double.parseDouble(sc.nextLine());
-    //         System.out.print("Low: ");
-    //         double low = Double.parseDouble(sc.nextLine());
-    //         System.out.print("Close: ");
-    //         double close = Double.parseDouble(sc.nextLine());
-    //         System.out.print("Volume: ");
-    //         int volume = Integer.parseInt(sc.nextLine());
-
-    //         if (StockModel.addStockData(symbol, date, open, high, low, close, volume)) {
-    //             System.out.println("Stock data added successfully.");
-    //         } else {
-    //             System.out.println("Failed to add stock data.");
-    //         }
-    //     } catch (IllegalArgumentException e) {
-    //         System.out.println("Invalid date format or number format.");
-    //     } catch (Exception e) {
-    //         System.out.println("Error adding data: " + e.getMessage());
-    //     }
+            if (model.addStockData(symbol, date, open, high, low, close, volume)) {
+                System.out.println("Stock data added successfully.");
+            } else {
+                System.out.println("Failed to add stock data.");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid date format or number format.");
+        } catch (Exception e) {
+            System.out.println("Error adding data: " + e.getMessage());
+        }
     }
 }

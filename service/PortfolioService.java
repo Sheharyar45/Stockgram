@@ -175,7 +175,7 @@ public class PortfolioService {
         // int portfolioId = PortfolioModel.getPortfolioIdByName(portfolioName);
         Scanner sc = new Scanner(System.in);
         boolean running = true;
-        StockModel stockModel = new StockModel();
+        StockModel stockModel = new StockModel(userId);
 
         while (running) {
             System.out.println("\n===== PORTFOLIO ACTIONS =====");
