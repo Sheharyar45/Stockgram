@@ -131,3 +131,24 @@ CREATE TABLE newstockdata (
 
     PRIMARY KEY (stock_symbol, timestamp, user_id)
 );
+
+
+// notes
+
+Postgres lets you subtract intervals from timestamps:
+
+NOW() - INTERVAL '7 days'
+NOW() - INTERVAL '3 months'
+
+'7 days'::INTERVAL
+'3 months'::INTERVAL
+'12 hours'::INTERVAL
+You can also concatenate strings to form intervals:
+NOW() - (? || ' days')::INTERVAL
+NOW() - (? || ' months')::INTERVAL
+NOW() - (? || ' hours')::INTERVAL
+
+casting:
+'value'::TYPE
+'7 days'::INTERVAL
+'123'::INTEGER

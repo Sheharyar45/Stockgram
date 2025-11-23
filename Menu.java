@@ -46,7 +46,7 @@ public class Menu {
 
                 case "4":
                     System.out.println("Opening Transactions...");
-                    // TransactionService.menu(userId);
+                    TransactionsService.menu(userId);
                     break;
 
                 case "5":
