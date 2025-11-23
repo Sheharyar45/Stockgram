@@ -9,7 +9,7 @@ import java.util.Scanner;
 import cs.toronto.edu.db.DBConnection;
 
 public class StockModel{
-    private Map<String, Double> stockPrices;
+    public Map<String, Double> stockPrices;
 
     public StockModel() {
         stockPrices = new HashMap<>();
@@ -20,7 +20,7 @@ public class StockModel{
     private void loadStockPrices() {
         stockPrices.clear();
         String query = "SELECT DISTINCT ON (stock_symbol) stock_symbol, close " +
-                       "FROM historicdata ORDER BY stock_symbol, timestamp DESC";
+                       "FROM historicdata ORDER BY stock_symbol DESC, timestamp DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -36,5 +36,40 @@ public class StockModel{
 
     public double getStockPrice(String symbol) {
         return stockPrices.getOrDefault(symbol, -1.0);
+    }
+
+    public Map<String, Double> getAllPrices() {
+        return stockPrices;
+    }
+
+    public static void getHistory(String symbol) {
+        String query = "SELECT timestamp, open, high, low, close, volume " +
+                       "FROM historicdata WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT 30";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, symbol);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.isBeforeFirst()) {
+                    System.out.println("No historical data found for stock: " + symbol);
+                    return;
+                }
+                System.out.printf("\n--- Historical Data for %s ---\n", symbol);
+                System.out.printf("%-20s %-10s %-10s %-10s %-10s %-10s%n", 
+                                  "Timestamp", "Open", "High", "Low", "Close", "Volume");
+                while (rs.next()) {
+                    System.out.printf("%-20s $%-9.2f $%-9.2f $%-9.2f $%-9.2f %-10d%n",
+                                      rs.getTimestamp("timestamp").toString(),
+                                      rs.getDouble("open"),
+                                      rs.getDouble("high"),
+                                      rs.getDouble("low"),
+                                      rs.getDouble("close"),
+                                      rs.getLong("volume"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

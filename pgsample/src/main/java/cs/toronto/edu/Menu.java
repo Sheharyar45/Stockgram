@@ -36,7 +36,7 @@ public class Menu {
                     break;
                 case "2":
                     System.out.println("Opening Stocks...");
-                    // StocksService.menu(userId);
+                    StockService.menu(userId);
                     break;
 
                 case "3":

@@ -353,4 +353,28 @@ public class PortfolioModel {
             e.printStackTrace();
         }
     }
+
+    public static void showMarketValue(int portfolioId, StockModel stockModel) {
+        String query = "SELECT stock_symbol, shares FROM portfolioholdings WHERE portfolio_id = ?";
+        String invested = "SELECT investment FROM Portfolios WHERE portfolio_id = ?";
+        double totalValue = getCashAmount(portfolioId);
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query);
+            PreparedStatement investedStmt = conn.prepareStatement(invested)) {
+            stmt.setInt(1, portfolioId);
+            investedStmt.setInt(1, portfolioId);
+            ResultSet rs = stmt.executeQuery();
+            ResultSet investedRs = investedStmt.executeQuery();
+            if (investedRs.next()) {
+                System.out.printf("Total Invested Amount: $%.2f%n", investedRs.getDouble("investment"));
+            }
+            while (rs.next()) {
+                double currValue = stockModel.getStockPrice(rs.getString("stock_symbol")) * rs.getDouble("shares");
+                totalValue += currValue;
+            }
+            System.out.printf("Total Market Value of Portfolio: $%.2f%n", totalValue);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

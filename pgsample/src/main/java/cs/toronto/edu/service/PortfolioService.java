@@ -212,7 +212,7 @@ public class PortfolioService {
                     PortfolioModel.viewHoldings(portfolioId, stockModel);
                     break;
                 case "6":
-                    // PortfolioCalculations.showMarketValue(portfolioId);
+                    PortfolioModel.showMarketValue(portfolioId, stockModel);
                     break;
                 case "7":
                     // PortfolioCalculations.showHistory(portfolioId, sc);

@@ -3,6 +3,7 @@
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/PortfolioService.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/model/FriendsModel.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/FriendsService.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/service/StockService.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/db/DBConnection.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/model/PortfolioModel.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/Main.java
