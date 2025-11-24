@@ -215,7 +215,7 @@ public class PortfolioService {
                     PortfolioModel.showMarketValue(portfolioId, stockModel);
                     break;
                 case "7":
-                    // PortfolioCalculations.showHistory(portfolioId, sc);
+                    PortfolioModel.showHistory(portfolioId, sc, stockModel);
                     break;
                 case "8":
                     // PortfolioCalculations.predictPrices(portfolioId, sc);

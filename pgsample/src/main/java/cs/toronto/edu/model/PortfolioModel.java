@@ -377,4 +377,63 @@ public class PortfolioModel {
             e.printStackTrace();
         }
     }
+
+    public static void showHistory(int portfolioId, Scanner sc, StockModel stockModel) {
+        viewHoldings(portfolioId, stockModel);
+        System.out.print("Enter stock symbol to view history: ");
+        String symbol = sc.nextLine().trim().toUpperCase();
+        
+        System.out.println("Enter the interval (e.g., 30d, 4w, 6m, 1y): ");
+        String interval = sc.nextLine().trim().toLowerCase();
+        if (!interval.matches("\\d+[dwmy]")) {
+            System.out.println("Invalid interval format.");
+            return;
+        }
+        int amount = Integer.parseInt(interval.substring(0, interval.length() - 1));
+        char unit = interval.charAt(interval.length() - 1);
+        int days = unit == 'd' ? amount :
+                   unit == 'w' ? amount * 7 :
+                   unit == 'm' ? amount * 30 :
+                   unit == 'y' ? amount * 365 : amount;
+        List<Map<String, Object>> history = stockModel.getStockGraphData(symbol, days);
+        showAsciiGraph(symbol, history);
+    }
+
+    
+    public static void showAsciiGraph(String symbol, List<Map<String, Object>> history) {
+        if (history.isEmpty()) {
+            System.out.println("No history found for " + symbol);
+            return;
+        }
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        for (Map<String, Object> p : history) {
+            double val = ((Number)p.get("close")).doubleValue();
+            min = Math.min(min, val);
+            max = Math.max(max, val);
+        }
+
+        int width = 50; 
+        System.out.printf("\n--- Performance Graph for %s ---\n", symbol);
+        System.out.printf("Min: $%.2f, Max: $%.2f%n", min, max);
+
+        for (Map<String, Object> p : history) {
+            double val = ((Number)p.get("close")).doubleValue();
+            int stars = (int) Math.round((val - min) / (max - min) * width);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < stars; i++) sb.append("*");
+
+            System.out.printf("%s | %-50s $%.2f%n", p.get("timestamp").toString(), sb.toString(), val);
+        }
+
+        System.out.print("\n\n\nSparkline: ");
+        for (Map<String, Object> p : history) {
+            double val = ((Number)p.get("close")).doubleValue();
+            int index = (int) Math.round((val - min) / (max - min) * 8); 
+            char[] blocks = {'▁','▂','▃','▄','▅','▆','▇','█'};
+            System.out.print(blocks[Math.min(index, blocks.length-1)]);
+        }
+        System.out.println();
+    }
+
 }

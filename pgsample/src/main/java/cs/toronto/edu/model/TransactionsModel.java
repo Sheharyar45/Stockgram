@@ -30,7 +30,6 @@ public class TransactionsModel {
 
             ResultSet rs = pstmt.executeQuery();
 
-            // dont show transaction id
             System.out.printf("%-15s %-10s %-15s %-10s %-15s %-25s%n",
                               "Portfolio Name", "Type", "Amount", "Shares", "Stock Symbol", "Transaction Time");
             System.out.println("---------------------------------------------------------------------------------------");

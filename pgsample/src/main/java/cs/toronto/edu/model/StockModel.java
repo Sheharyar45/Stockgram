@@ -143,5 +143,39 @@ public class StockModel{
         }
     }
 
+    public List<Map<String, Object>> getStockGraphData(String symbol, int days) {
+        List<Map<String, Object>> history = new ArrayList<>();
+        String query = "SELECT timestamp, close " +
+                       "FROM (" +
+                       "    SELECT stock_symbol, timestamp, close FROM historicdata " +
+                       "    UNION ALL " +
+                       "    SELECT stock_symbol, timestamp, close FROM newstockdata WHERE user_id = ?" +
+                       ") AS all_data " + "WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setInt(1, this.userId);
+            stmt.setString(2, symbol);
+            stmt.setInt(3, days);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> point = new HashMap<>();
+                    point.put("timestamp", rs.getDate("timestamp"));
+                    point.put("close", rs.getDouble("close"));
+                    history.add(point);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // Reverse for making graph old to new
+        List<Map<String, Object>> reversed = new ArrayList<>();
+        for (int i = history.size() - 1; i >= 0; i--) {
+            reversed.add(history.get(i));
+        }
+        return reversed;
+    }
+
     
 }
