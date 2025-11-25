@@ -158,8 +158,16 @@ casting:
 CREATE INDEX idx_historic_symbol_time 
 ON historicdata(stock_symbol, timestamp);
 
+CREATE INDEX idx_historic_symbol_time_close 
+ON historicdata(stock_symbol, timestamp DESC, close);
+
 CREATE INDEX idx_newstock_user_symbol_time 
 ON newstockdata(user_id, stock_symbol, timestamp);
+
+CREATE INDEX idx_newstock_user_symbol_time_close 
+ON newstockdata(user_id, stock_symbol, timestamp DESC, close);
+
+CREATE INDEX idx_historic_timestamp ON historicdata(timestamp DESC);
 
 CREATE INDEX idx_portfolios_userid ON portfolios(user_id);
 
