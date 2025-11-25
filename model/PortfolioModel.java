@@ -436,4 +436,30 @@ public class PortfolioModel {
         System.out.println();
     }
 
+    public static void showStatistics(int portfolioId, Scanner sc, StockModel stockModel) {
+        // Get stocks in portfolio
+        List<String> portfoliostocks = new ArrayList<>();
+        String sql = "SELECT stock_symbol FROM portfolioholdings WHERE portfolio_id = ?";
+        
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, portfolioId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                portfoliostocks.add(rs.getString("stock_symbol"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (portfoliostocks.isEmpty()) {
+            System.out.println("No stocks in portfolio to analyze.");
+            return;
+        }
+
+        System.out.println("\n===== PORTFOLIO STATISTICS =====");
+        stockModel.showStatistics(portfoliostocks, sc);
+    }
+
 }

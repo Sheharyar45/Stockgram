@@ -152,3 +152,18 @@ casting:
 'value'::TYPE
 '7 days'::INTERVAL
 '123'::INTEGER
+
+>> INDEXES <<
+
+CREATE INDEX idx_historic_symbol_time 
+ON historicdata(stock_symbol, timestamp);
+
+CREATE INDEX idx_newstock_user_symbol_time 
+ON newstockdata(user_id, stock_symbol, timestamp);
+
+CREATE INDEX idx_portfolios_userid ON portfolios(user_id);
+
+CREATE INDEX idx_trans_portfolio_time 
+ON transactions(portfolio_id, timestamp); // may remove due to write heavy nature
+
+

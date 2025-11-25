@@ -218,10 +218,10 @@ public class PortfolioService {
                     PortfolioModel.showHistory(portfolioId, sc, stockModel);
                     break;
                 case "8":
-                    // PortfolioCalculations.predictPrices(portfolioId, sc);
+                    // PortfolioModel.predictPrices(portfolioId, sc);
                     break;
                 case "9":
-                    // PortfolioCalculations.showStatistics(portfolioId);
+                    PortfolioModel.showStatistics(portfolioId, sc, stockModel);
                     break;
                 case "10":
                     running = false;
