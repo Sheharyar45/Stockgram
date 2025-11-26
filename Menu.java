@@ -1,6 +1,7 @@
 package cs.toronto.edu;
 
 import java.util.Scanner;
+import cs.toronto.edu.model.StockModel;
 
 
 public class Menu {
@@ -14,6 +15,7 @@ public class Menu {
         Scanner scanner = new Scanner(System.in);
 
         boolean loggedIn = true;
+        StockModel stockModel = new StockModel(userId);
 
         while (loggedIn) {
             System.out.println("\n===== MAIN MENU =====");
@@ -36,12 +38,12 @@ public class Menu {
                     break;
                 case "2":
                     System.out.println("Opening Stocks...");
-                    StockService.menu(userId);
+                    StockService.menu(userId, stockModel);
                     break;
 
                 case "3":
                     System.out.println("Opening Portfolios...");
-                    PortfolioService.menu(userId);
+                    PortfolioService.menu(userId, stockModel);
                     break;
 
                 case "4":

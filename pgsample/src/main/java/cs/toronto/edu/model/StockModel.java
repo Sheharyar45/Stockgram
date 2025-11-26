@@ -11,27 +11,54 @@ import cs.toronto.edu.db.DBConnection;
 public class StockModel{
     public Map<String, Double> stockPrices;
     private int userId;
+    Connection conn;
 
     public StockModel(int userId) {
+        try {
+            this.conn = DBConnection.getConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         this.userId = userId;
         stockPrices = new HashMap<>();
+        makeStatsViews();
         loadStockPrices();
+    }
+
+    private void makeStatsViews() {
+        String views = 
+        "CREATE OR REPLACE TEMP VIEW combined_data AS " +
+            "SELECT stock_symbol, timestamp, open, high, low, close, volume " +
+            "FROM historicdata " +
+            "UNION ALL " +
+            "SELECT stock_symbol, timestamp, open, high, low, close, volume " +
+            "FROM newstockdata WHERE user_id = " + this.userId + "; " +
+
+        "CREATE OR REPLACE TEMP VIEW stock_returns AS " +
+            "SELECT stock_symbol, timestamp, " +
+            "       (close / NULLIF(LAG(close) OVER (PARTITION BY stock_symbol ORDER BY timestamp), 0) - 1.0) AS daily_return " +
+            "FROM combined_data; " + 
+        "" +
+        "CREATE OR REPLACE TEMP VIEW market_returns AS " +
+            "SELECT timestamp, AVG(daily_return) AS market_return " +
+            "FROM stock_returns " +
+            "WHERE daily_return IS NOT NULL " +
+            "GROUP BY timestamp; ";
+        try (Statement stmt = this.conn.createStatement()) {
+            stmt.execute(views);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
 
     private void loadStockPrices() {
         stockPrices.clear();
         String query = "SELECT DISTINCT ON (stock_symbol) stock_symbol, close " +
-                       "FROM (" +
-                       "    SELECT stock_symbol, timestamp, close FROM historicdata " +
-                       "    UNION ALL " +
-                       "    SELECT stock_symbol, timestamp, close FROM newstockdata WHERE user_id = ?" +
-                       ") AS all_data " +
+                       "FROM combined_data " +
                        "ORDER BY stock_symbol, timestamp DESC";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, this.userId);
+        try (PreparedStatement stmt = this.conn.prepareStatement(query)) {
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     String symbol = rs.getString("stock_symbol");
@@ -54,18 +81,12 @@ public class StockModel{
 
     public void getHistory(String symbol, int days) {
         String query = "SELECT timestamp, open, high, low, close, volume " +
-                       "FROM (" +
-                       "    SELECT stock_symbol, timestamp, open, high, low, close, volume FROM historicdata " +
-                       "    UNION ALL " +
-                       "    SELECT stock_symbol, timestamp, open, high, low, close, volume FROM newstockdata WHERE user_id = ?" +
-                       ") AS all_data " + "WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
+                       "FROM combined_data WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
 
-        try (Connection conn = DBConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (PreparedStatement stmt = this.conn.prepareStatement(query)) {
             
-            stmt.setInt(1, this.userId);
-            stmt.setString(2, symbol);
-            stmt.setInt(3, days);
+            stmt.setString(1, symbol);
+            stmt.setInt(2, days);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.isBeforeFirst()) {
                     System.out.println("No historical data found for stock: " + symbol);
@@ -97,10 +118,9 @@ public class StockModel{
                        "low = ?, close = ?, volume = ?";
         String checkQuery = "SELECT 1 FROM historicdata WHERE stock_symbol = ? AND timestamp = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(query);
-            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
-            PreparedStatement stockCheckStmt = conn.prepareStatement(stockExistsQuery)) {
+        try (PreparedStatement stmt = this.conn.prepareStatement(query);
+            PreparedStatement checkStmt = this.conn.prepareStatement(checkQuery);
+            PreparedStatement stockCheckStmt = this.conn.prepareStatement(stockExistsQuery)) {
             // Check if stock exists in stocks table
             stockCheckStmt.setString(1, symbol);
             ResultSet stockRs = stockCheckStmt.executeQuery();
@@ -132,6 +152,7 @@ public class StockModel{
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
+                makeStatsViews();
                 loadStockPrices();
                 return true;
             } else {
@@ -146,18 +167,12 @@ public class StockModel{
     public List<Map<String, Object>> getStockGraphData(String symbol, int days) {
         List<Map<String, Object>> history = new ArrayList<>();
         String query = "SELECT timestamp, close " +
-                       "FROM (" +
-                       "    SELECT stock_symbol, timestamp, close FROM historicdata " +
-                       "    UNION ALL " +
-                       "    SELECT stock_symbol, timestamp, close FROM newstockdata WHERE user_id = ?" +
-                       ") AS all_data " + "WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
+                       "FROM combined_data WHERE stock_symbol = ? ORDER BY timestamp DESC LIMIT ?";
 
-        try (Connection conn = DBConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (PreparedStatement stmt = this.conn.prepareStatement(query)) {
             
-            stmt.setInt(1, this.userId);
-            stmt.setString(2, symbol);
-            stmt.setInt(3, days);
+            stmt.setString(1, symbol);
+            stmt.setInt(2, days);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> point = new HashMap<>();
@@ -193,7 +208,7 @@ public class StockModel{
         
         int amount = Integer.parseInt(interval.substring(0, interval.length() - 1));
         char unit = interval.charAt(interval.length() - 1);
-        String pgInterval = switch (unit) {
+        String sqlInterval = switch (unit) {
             case 'd' -> amount + " DAYS";
             case 'w' -> (amount * 7) + " DAYS";
             case 'm' -> amount + " MONTHS";
@@ -201,50 +216,32 @@ public class StockModel{
             default -> amount + " DAYS";
         };
 
-        System.out.println("\n===== STOCK STATISTICS =====");
+        System.out.println("\n---- STOCK STATISTICS ----");
         System.out.println("Analysis period: " + interval + "\n");
 
-        // 1. Calculate COV and Beta for each stock
-        showCovAndBeta(symbols, pgInterval);
+        showCovAndBeta(symbols, sqlInterval);
 
-        // 2. Calculate covariance matrix
-        // showCovarianceMatrix(symbols, pgInterval);
+        showCovarianceMatrix(symbols, sqlInterval);
     }
 
-        private String getCombinedsql() {
-        return "combined_data AS (" +
-               "    SELECT stock_symbol, timestamp, close FROM historicdata " +
-               "    UNION ALL " +
-               "    SELECT stock_symbol, timestamp, close FROM newstockdata WHERE user_id = ?" +
-               ")";
-    }
 
-    private void showCovAndBeta(List<String> symbols, String pgInterval) {
+    private void showCovAndBeta(List<String> symbols, String Interval) {
         System.out.println("----- COEFFICIENT OF VARIATION & BETA -----");
         System.out.printf("%-10s %15s %15s%n", "Symbol", "COV", "Beta");
         System.out.println("------------------------------------------");
 
         String covBetaQuery = 
-            "WITH " + getCombinedsql() + ", " +
+            "WITH " +
             "latest_date AS (" +
             "    SELECT MAX(timestamp) AS max_date FROM combined_data" +
             "), " +
-            "stock_returns AS (" +
-            "    SELECT " +
-            "        stock_symbol, " +
-            "        timestamp, " +
-            "        (close - LAG(close) OVER (PARTITION BY stock_symbol ORDER BY timestamp)) " +
-            "            / NULLIF(LAG(close) OVER (PARTITION BY stock_symbol ORDER BY timestamp), 0) AS daily_return " +
-            "    FROM combined_data, latest_date " +
-            "    WHERE timestamp >= latest_date.max_date - ?::INTERVAL" +
+            "updated_stock_returns AS (" +
+            "    SELECT * FROM stock_returns, latest_date l " +
+            "    WHERE timestamp >= l.max_date - ?::INTERVAL" +
             "), " +
-            "market_returns AS (" +
-            "    SELECT " +
-            "        timestamp, " +
-            "        AVG(daily_return) AS market_return " +
-            "    FROM stock_returns " +
-            "    WHERE daily_return IS NOT NULL " +
-            "    GROUP BY timestamp" +
+            "updated_market_returns AS (" +
+            "    SELECT * FROM market_returns, latest_date l " +
+            "    WHERE timestamp >= l.max_date - ?::INTERVAL" +
             "), " +
             "stock_stats AS (" +
             "    SELECT " +
@@ -252,14 +249,14 @@ public class StockModel{
             "        AVG(sr.daily_return) AS mean_return, " +
             "        STDDEV(sr.daily_return) AS stddev_return, " +
             "        COVAR_POP(sr.daily_return, mr.market_return) AS cov_with_market " +
-            "    FROM stock_returns sr " +
-            "    JOIN market_returns mr ON sr.timestamp = mr.timestamp " +
+            "    FROM updated_stock_returns sr " +
+            "    JOIN updated_market_returns mr ON sr.timestamp = mr.timestamp " +
             "    WHERE sr.daily_return IS NOT NULL " +
             "    GROUP BY sr.stock_symbol" +
             "), " +
             "market_variance AS (" +
             "    SELECT VAR_POP(market_return) AS var_market " +
-            "    FROM market_returns" +
+            "    FROM updated_market_returns" +
             ") " +
             "SELECT " +
             "    ss.stock_symbol, " +
@@ -269,15 +266,15 @@ public class StockModel{
             "CROSS JOIN market_variance mv " +
             "WHERE ss.stock_symbol = ?";
 
-        try (Connection conn = DBConnection.getConnection()) {
+        try{
             double totalBeta = 0;
             double totalCov = 0;
             int count = 0;
 
             for (String symbol : symbols) {
-                try (PreparedStatement stmt = conn.prepareStatement(covBetaQuery)) {
-                    stmt.setInt(1, this.userId);
-                    stmt.setString(2, pgInterval);
+                try (PreparedStatement stmt = this.conn.prepareStatement(covBetaQuery)) {
+                    stmt.setString(1, Interval);
+                    stmt.setString(2, Interval);
                     stmt.setString(3, symbol);
                     ResultSet rs = stmt.executeQuery();
                     
@@ -296,7 +293,7 @@ public class StockModel{
                             System.out.printf("%-10s %15s %15s%n", symbol, "N/A", "N/A");
                         }
                     } else {
-                        System.out.printf("%-10s %15s %15s%n", symbol, "N/Aaa", "N/Aaa");
+                        System.out.printf("%-10s %15s %15s%n", symbol, "N/A", "N/A");
                     }
                 }
             }
@@ -315,5 +312,101 @@ public class StockModel{
         }
         System.out.println();
     }
+
+    private void showCovarianceMatrix(List<String> symbols, String Interval) {
+        if (symbols.size() < 2) {
+            System.out.println("Need at least 2 stocks for covariance matrix.");
+            return;
+        }
+
+        System.out.println("----- COVARIANCE/CORRELATION MATRIX -----");
+
+        String matrixQuery = 
+            "WITH " +
+            "latest_date AS (" +
+            "    SELECT MAX(timestamp) AS max_date FROM combined_data" +
+            "), " +
+            "updated_stock_returns AS (" +
+            "    SELECT * FROM stock_returns, latest_date l " +
+            "    WHERE timestamp >= l.max_date - ?::INTERVAL" +
+            "    AND stock_symbol = ANY(?)" +
+            "), " +
+            "pairs AS (" +
+            "    SELECT a.stock_symbol AS s1, b.stock_symbol AS s2, a.daily_return AS r1, b.daily_return AS r2 " +
+            "    FROM updated_stock_returns a JOIN updated_stock_returns b USING (timestamp) " +
+            "    WHERE a.stock_symbol <= b.stock_symbol " +
+            "    AND a.daily_return IS NOT NULL AND b.daily_return IS NOT NULL" +
+            ") " +
+            "SELECT s1, s2, " +
+            "       COUNT(*) AS num, " +
+            "       COVAR_SAMP(r1, r2) AS covar, " +
+            "       CORR(r1, r2) AS corr " +
+            "FROM pairs " +
+            "GROUP BY s1, s2 " +
+            "ORDER BY s1, s2";
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(matrixQuery)) {
+            
+            stmt.setString(1, Interval);
+            stmt.setArray(2, this.conn.createArrayOf("VARCHAR", symbols.toArray()));
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            int size = symbols.size();
+            double[][] covariance = new double[size][size];
+            double[][] correlation = new double[size][size];
+            Map<String, Integer> symbolIndex = new HashMap<>();
+            for (int i = 0; i < size; i++) {
+                symbolIndex.put(symbols.get(i), i);
+            }
+            
+            while (rs.next()) {
+                String s1 = rs.getString("s1");
+                String s2 = rs.getString("s2");
+                double covar = rs.getDouble("covar");
+                double corr = rs.getDouble("corr");
+                
+                Integer i = symbolIndex.get(s1);
+                Integer j = symbolIndex.get(s2);
+                
+                if (i != null && j != null) {
+                    covariance[i][j] = covariance[j][i] = covar;
+                    correlation[i][j] = correlation[j][i] = corr;
+                }
+            }
+
+            System.out.println("\nCovariance Matrix:");
+            printMatrix(symbols, covariance);
+            
+            System.out.println("\nCorrelation Matrix:");
+            printMatrix(symbols, correlation);
+            
+            System.out.println("\nInterpretation:");
+            System.out.println("  Correlation near +1: Stocks move together");
+            System.out.println("  Correlation near -1: Stocks move opposite");
+            System.out.println("  Correlation near  0: Stocks move independently");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void printMatrix(List<String> symbols, double[][] matrix) {
+        System.out.printf("%10s", "");
+        for (String s : symbols) {
+            System.out.printf("%10s", s);
+        }
+        System.out.println();
+        
+        for (int i = 0; i < symbols.size(); i++) {
+            System.out.printf("%10s", symbols.get(i));
+            for (int j = 0; j < symbols.size(); j++) {
+                System.out.printf("%10.4f", matrix[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
+
 
 }

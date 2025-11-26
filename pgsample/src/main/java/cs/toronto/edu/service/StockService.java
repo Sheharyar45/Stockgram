@@ -7,9 +7,8 @@ import cs.toronto.edu.model.StockModel;
 
 public class StockService {
 
-    public static void menu(int userId) {
+    public static void menu(int userId, StockModel stockModel) {
         Scanner sc = new Scanner(System.in);
-        StockModel stockModel = new StockModel(userId);
         boolean running = true;
 
         while (running) {

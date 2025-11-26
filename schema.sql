@@ -174,4 +174,10 @@ CREATE INDEX idx_portfolios_userid ON portfolios(user_id);
 CREATE INDEX idx_trans_portfolio_time 
 ON transactions(portfolio_id, timestamp); // may remove due to write heavy nature
 
+CREATE INDEX idx_portfolios_userid_name ON portfolios(user_id, name);
+
+CREATE INDEX idx_stocklist_userid ON stocklist(user_id);
+
+CREATE INDEX idx_holdings_portfolio ON portfolioholdings(portfolio_id);
+CREATE INDEX idx_holdings_portfolio_symbol ON portfolioholdings(portfolio_id, stock_symbol)
 

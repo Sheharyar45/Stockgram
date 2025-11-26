@@ -9,7 +9,7 @@ import cs.toronto.edu.model.StockModel;
 
 public class PortfolioService {
 
-    public static void menu(int userId) {
+    public static void menu(int userId, StockModel stockModel) {
         Scanner sc = new Scanner(System.in);
         boolean on = true;
 
@@ -31,7 +31,7 @@ public class PortfolioService {
                     createPortfolio(userId, sc);
                     break;
                 case "3":
-                    openPortfolio(userId, sc);
+                    openPortfolio(userId, sc, stockModel);
                     break;
                 case "4":
                     on = false;
@@ -84,7 +84,7 @@ public class PortfolioService {
 
 
 
-    private static void openPortfolio(int userId, Scanner sc) {
+    private static void openPortfolio(int userId, Scanner sc, StockModel stockModel) {
         System.out.print("Enter Portfolio name to select or 1 to go back: ");
         String portfolioName = sc.nextLine();
         if (portfolioName.equals("1")) {
@@ -94,7 +94,7 @@ public class PortfolioService {
             int portfolioId = PortfolioModel.getPortfolioIdByName(userId, portfolioName);
             if (portfolioId != -1) {
                 PortfolioModel.viewPortfolioDetails(portfolioId, portfolioName);
-                portfolioMenu(portfolioId, userId);
+                portfolioMenu(portfolioId, userId, stockModel);
             } else {
                 System.out.println("You do not own a portfolio with that name.");
             }
@@ -171,12 +171,10 @@ public class PortfolioService {
         return true; 
     }
 
-    private static void portfolioMenu(int portfolioId, int userId) {
+    private static void portfolioMenu(int portfolioId, int userId, StockModel stockModel) {
         // int portfolioId = PortfolioModel.getPortfolioIdByName(portfolioName);
         Scanner sc = new Scanner(System.in);
         boolean running = true;
-        StockModel stockModel = new StockModel(userId);
-
         while (running) {
             System.out.println("\n===== PORTFOLIO ACTIONS =====");
             System.out.println("1. Deposit cash");
