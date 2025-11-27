@@ -85,9 +85,9 @@ public class PortfolioService {
 
 
     private static void openPortfolio(int userId, Scanner sc, StockModel stockModel) {
-        System.out.print("Enter Portfolio name to select or 1 to go back: ");
+        System.out.print("Enter Portfolio name to select or back to go back: ");
         String portfolioName = sc.nextLine();
-        if (portfolioName.equals("1")) {
+        if (portfolioName.equalsIgnoreCase("back")) {
             return;
         }
         try {

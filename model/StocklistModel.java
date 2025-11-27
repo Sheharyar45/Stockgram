@@ -110,6 +110,11 @@ public class StocklistModel {
     }
 
     public static boolean addStockToList(int stocklistId, String symbol, double shares, StockModel stockModel) {
+        if (!isOwner(userId, stocklistId)) {
+            System.out.println("Only the owner can modify this stocklist.");
+            return false;
+        }
+        
         symbol = symbol.trim().toUpperCase();
         if (symbol.isEmpty() || shares <= 0) {
             System.out.println("Invalid stock symbol or number of shares.");
@@ -329,4 +334,17 @@ public class StocklistModel {
         }
     }
 
+    private static boolean isOwner(int userId, int stocklistId) {
+        String sql = "SELECT 1 FROM stocklist WHERE stocklist_id = ? AND user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, stocklistId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
