@@ -26,7 +26,7 @@ public class ReviewService {
 
             switch (choice) {
                 case "1":
-                    viewReviews(stocklistId);
+                    viewReviews(stocklistId, userId);
                     break;
                 case "2":
                     addReview(userId, stocklistId, sc);
@@ -52,8 +52,8 @@ public class ReviewService {
         }
     }
 
-    private static void viewReviews(int stocklistId) {
-        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId);
+    private static void viewReviews(int stocklistId, int userId) {
+        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId, userId);
 
         if (reviews.isEmpty()) {
             System.out.println("No reviews for this stocklist.");
@@ -85,7 +85,7 @@ public class ReviewService {
     }
 
     private static void editReview(int userId, int stocklistId, Scanner sc) {
-        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId);
+        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId, userId);
 
         // Find the user's review
         Review userReview = reviews.stream()
@@ -107,13 +107,13 @@ public class ReviewService {
             return;
         }
 
-        if (ReviewModel.editReview(userReview.reviewId, newText)) {
+        if (ReviewModel.editReview(userReview.reviewId, userId, newText)) {
             System.out.println("Review updated successfully.");
         }
     }
 
     private static void deleteReview(int userId, int stocklistId, Scanner sc) {
-        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId);
+        List<Review> reviews = ReviewModel.getReviewsForStocklist(stocklistId, userId);
 
         // Find the user's review
         Review userReview = reviews.stream()
@@ -130,7 +130,7 @@ public class ReviewService {
         String confirm = sc.nextLine().trim().toLowerCase();
 
         if (confirm.equals("yes")) {
-            if (ReviewModel.deleteReview(userReview.reviewId)) {
+            if (ReviewModel.deleteReview(userReview.reviewId, userId)) {
                 System.out.println("Review deleted successfully.");
             }
         } else {

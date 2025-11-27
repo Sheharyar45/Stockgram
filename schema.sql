@@ -43,8 +43,8 @@ CREATE TABLE transactions (
     amount REAL NOT NULL,
     stock_symbol VARCHAR(5),
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
-
-    CHECK (type IN ('Deposit', 'Withdraw', 'Buy', 'Sell')),
+    shares REAL,
+    CHECK (type IN ('Deposit', 'Withdraw', 'Buy', 'Sell'))
 );
 
 
@@ -58,10 +58,10 @@ CREATE TABLE stocklist (
 
 
 CREATE TABLE stocklistholdings (
-    stocklist_id INTEGER NOT NULL REFERENCES stocklist(stocklist_id),
+    stocklist_id INTEGER NOT NULL 
+    REFERENCES stocklist(stocklist_id) ON DELETE CASCADE,
     stock_symbol VARCHAR(5) NOT NULL,
     shares REAL NOT NULL,
-
     PRIMARY KEY (stocklist_id, stock_symbol)
 );
 
@@ -73,7 +73,6 @@ CREATE TABLE historicdata (
     low REAL,
     close REAL,
     volume INTEGER,
-
     PRIMARY KEY (stock_symbol, timestamp)
 );
 
@@ -99,7 +98,7 @@ CREATE TABLE friendship (
 
 CREATE TABLE reviews (
     review_id     SERIAL PRIMARY KEY,
-    user_id       INTEGER NOT NULL REFERENCES users(user_id),
+    user_id       INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     stocklist_id  INTEGER NOT NULL REFERENCES stocklist(stocklist_id) ON DELETE CASCADE,
     text          TEXT,
     time_created  TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -108,6 +107,7 @@ CREATE TABLE reviews (
     dislikes      INTEGER DEFAULT 0,
 
     CONSTRAINT unique_user_stocklist_review UNIQUE (user_id, stocklist_id),
+    CHECK (char_length(text) <= 4000)
 );
 
 
@@ -172,12 +172,12 @@ CREATE INDEX idx_historic_timestamp ON historicdata(timestamp DESC);
 CREATE INDEX idx_portfolios_userid ON portfolios(user_id);
 
 CREATE INDEX idx_trans_portfolio_time 
-ON transactions(portfolio_id, timestamp); // may remove due to write heavy nature
+ON transactions(portfolio_id, timestamp); 
 
 CREATE INDEX idx_portfolios_userid_name ON portfolios(user_id, name);
 
 CREATE INDEX idx_stocklist_userid ON stocklist(user_id);
 
 CREATE INDEX idx_holdings_portfolio ON portfolioholdings(portfolio_id);
-CREATE INDEX idx_holdings_portfolio_symbol ON portfolioholdings(portfolio_id, stock_symbol)
+CREATE INDEX idx_holdings_portfolio_symbol ON portfolioholdings(portfolio_id, stock_symbol);
 

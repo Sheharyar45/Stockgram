@@ -1,6 +1,7 @@
 package cs.toronto.edu;
 
 import java.util.Scanner;
+import java.util.List;
 import cs.toronto.edu.model.StocklistModel;
 import cs.toronto.edu.model.StockModel;
 import cs.toronto.edu.service.ReviewService;
@@ -17,7 +18,9 @@ public class StocklistService {
             System.out.println("2. Create new stocklist");
             System.out.println("3. Open stocklist");
             System.out.println("4. Delete stocklist");
-            System.out.println("5. Back");
+            System.out.println("5. View public stocklists");
+            System.out.println("6. View invited stocklists");
+            System.out.println("7. Back");
             System.out.print("Choose an option: ");
 
             String choice = sc.nextLine().trim();
@@ -36,6 +39,20 @@ public class StocklistService {
                     deleteStocklist(userId, sc);
                     break;
                 case "5":
+                    viewPublicStocklists();
+                    break;
+                case "6":
+                    List<Integer> invites = StocklistModel.getInvitedStocklists(userId);
+                    if (invites.isEmpty()) {
+                        System.out.println("No stocklists shared with you for review.");
+                    } else {
+                        System.out.println("--- Stocklists shared with you ---");
+                        for (int sid : invites) {
+                            System.out.println("Stocklist ID: " + sid);
+                        }
+                    }
+                    break;
+                case "7":
                     running = false;
                     break;
                 default:
@@ -104,6 +121,21 @@ public class StocklistService {
         }
     }
 
+    private static void viewPublicStocklists() {
+        List<String> publicLists = StocklistModel.getPublicStocklists();
+
+        System.out.println("\n--- PUBLIC STOCKLISTS ---");
+
+        if (publicLists.isEmpty()) {
+            System.out.println("No public stocklists available.");
+            return;
+        }
+
+        for (String entry : publicLists) {
+            System.out.println(entry);
+        }
+    }
+
 
     // Stocklist Menu
     private static void stocklistMenu(int listId, int userId, StockModel stockModel, Scanner sc) {
@@ -116,7 +148,8 @@ public class StocklistService {
             System.out.println("3. Remove stock");
             System.out.println("4. Manage reviews");
             System.out.println("5. View predictions");
-            System.out.println("6. Back");
+            System.out.println("6. Send to friend for review");
+            System.out.println("7. Back");
             System.out.print("Choose: ");
 
             String choice = sc.nextLine().trim();
@@ -167,6 +200,23 @@ public class StocklistService {
                     break;
 
                 case "6":
+                    System.out.print("Enter friend's user ID: ");
+                    int friendId;
+                    try {
+                        friendId = Integer.parseInt(sc.nextLine().trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid user ID.");
+                        break;
+                    }
+
+                    if (StocklistModel.sendToFriend(userId, friendId, listId)) {
+                        System.out.println("Stocklist sent successfully.");
+                    } else {
+                        System.out.println("Failed to send stocklist.");
+                    }
+                    break;
+                
+                case "7":
                     running = false;
                     break;
 

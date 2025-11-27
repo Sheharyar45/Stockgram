@@ -241,4 +241,92 @@ public class StocklistModel {
         }
     }
 
+    public static List<String> getPublicStocklists() {
+        List<String> results = new ArrayList<>();
+
+        String sql =
+            "SELECT s.stocklist_id, u.username " +
+            "FROM stocklist s " +
+            "JOIN users u ON s.user_id = u.user_id " +
+            "WHERE s.visibility = 'public' " +
+            "ORDER BY s.stocklist_id";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("stocklist_id");
+                String username = rs.getString("username");
+
+                results.add("ID: " + id + " | Owner: " + username);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error fetching public stocklists: " + e.getMessage());
+        }
+
+        return results;
+    }
+
+    public static boolean sendToFriend(int senderId, int receiverId, int stocklistId) {
+        String sql = "INSERT INTO requestreview (sender, receiver, stocklist_id) VALUES (?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, senderId);
+            stmt.setInt(2, receiverId);
+            stmt.setInt(3, stocklistId);
+            stmt.executeUpdate();
+            System.out.println("Stocklist sent to friend successfully.");
+            return true;
+
+        } catch (Exception e) { // catch all checked exceptions
+            if (e instanceof SQLException sqlEx && sqlEx.getSQLState().equals("23505")) {
+                System.out.println("You have already sent this stocklist to this friend.");
+            } else {
+                e.printStackTrace();
+            }
+            return false;
+        }
+    }
+
+
+    public static List<Integer> getInvitedStocklists(int userId) {
+        List<Integer> stocklists = new ArrayList<>();
+        String sql = "SELECT stocklist_id FROM requestreview WHERE receiver = ? ORDER BY stocklist_id";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                stocklists.add(rs.getInt("stocklist_id"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return stocklists;
+    }
+
+    public static boolean isInvitedReviewer(int userId, int stocklistId) {
+        String sql = "SELECT 1 FROM requestreview WHERE receiver = ? AND stocklist_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, stocklistId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
