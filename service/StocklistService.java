@@ -2,10 +2,12 @@ package cs.toronto.edu;
 
 import java.util.Scanner;
 import cs.toronto.edu.model.StocklistModel;
+import cs.toronto.edu.model.StockModel;
+import cs.toronto.edu.service.ReviewService;
 
 public class StocklistService {
 
-    public static void menu(int userId) {
+    public static void menu(int userId, StockModel stockModel) {
         Scanner sc = new Scanner(System.in);
         boolean running = true;
 
@@ -14,7 +16,8 @@ public class StocklistService {
             System.out.println("1. View my stocklists");
             System.out.println("2. Create new stocklist");
             System.out.println("3. Open stocklist");
-            System.out.println("4. Back");
+            System.out.println("4. Delete stocklist");
+            System.out.println("5. Back");
             System.out.print("Choose an option: ");
 
             String choice = sc.nextLine().trim();
@@ -27,9 +30,12 @@ public class StocklistService {
                     createStocklist(userId, sc);
                     break;
                 case "3":
-                    openStocklist(userId, sc);
+                    openStocklist(userId, sc, stockModel);
                     break;
                 case "4":
+                    deleteStocklist(userId, sc);
+                    break;
+                case "5":
                     running = false;
                     break;
                 default:
@@ -47,18 +53,20 @@ public class StocklistService {
             return;
         }
 
-        if (StocklistModel.createStocklist(userId, visibility)) {
-            System.out.println("Stocklist created successfully.");
+        Integer stocklistId = StocklistModel.createStocklist(userId, visibility);
+
+        if (stocklistId != null) {
+            System.out.println("Stocklist created successfully. ID: " + stocklistId);
         } else {
             System.out.println("Failed to create stocklist.");
         }
     }
 
-    private static void openStocklist(int userId, Scanner sc) {
+    private static void openStocklist(int userId, Scanner sc, StockModel stockModel) {
         System.out.print("Enter stocklist ID to open or 'back' to go back: ");
         String input = sc.nextLine().trim();
 
-        if (input.equals("back")) return;
+        if (input.equalsIgnoreCase("back")) return;
 
         int listId;
         try {
@@ -68,75 +76,103 @@ public class StocklistService {
             return;
         }
 
-        if (!StocklistModel.stocklistExists(userId, listId)) {
-            System.out.println("Stocklist not found.");
+        if (!StocklistModel.stocklistExistsForUser(userId, listId)) {
+            System.out.println("Stocklist not found or does not belong to you.");
             return;
         }
 
-        stocklistMenu(listId, userId);
+        stocklistMenu(listId, userId, stockModel, sc);
     }
 
-    private static void stocklistMenu(int listId, int userId) {
-        Scanner sc = new Scanner(System.in);
+    private static void deleteStocklist(int userId, Scanner sc) {
+        System.out.print("Enter the stocklist ID to delete or 'back' to cancel: ");
+        String input = sc.nextLine().trim();
+        if (input.equalsIgnoreCase("back")) return;
+
+        int stocklistId;
+        try {
+            stocklistId = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid stocklist ID.");
+            return;
+        }
+
+        if (StocklistModel.deleteStocklist(userId, stocklistId)) {
+            System.out.println("Stocklist deleted successfully.");
+        } else {
+            System.out.println("Failed to delete stocklist.");
+        }
+    }
+
+
+    // Stocklist Menu
+    private static void stocklistMenu(int listId, int userId, StockModel stockModel, Scanner sc) {
         boolean running = true;
-        StocklistModel stocklistModel = new StocklistModel(userId);
 
         while (running) {
             System.out.println("\n===== STOCKLIST ACTIONS =====");
             System.out.println("1. View stocks in this list");
             System.out.println("2. Add stock");
             System.out.println("3. Remove stock");
-            System.out.println("4. Back");
+            System.out.println("4. Manage reviews");
+            System.out.println("5. View predictions");
+            System.out.println("6. Back");
             System.out.print("Choose: ");
 
-            switch (sc.nextLine().trim()) {
+            String choice = sc.nextLine().trim();
+
+            switch (choice) {
                 case "1":
                     StocklistModel.viewStocksInList(listId);
                     break;
+
                 case "2":
-                    addStock(listId, sc, stocklistModel);
+                    System.out.print("Enter stock symbol: ");
+                    String symbol = sc.nextLine().trim().toUpperCase();
+
+                    System.out.print("Enter number of shares: ");
+                    double shares;
+                    try {
+                        shares = Double.parseDouble(sc.nextLine());
+                        if (shares <= 0) throw new NumberFormatException();
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid number of shares.");
+                        break;
+                    }
+
+                    if (StocklistModel.addStockToList(listId, symbol, shares, stockModel)) {
+                        System.out.println("Stock added successfully.");
+                    } else {
+                        System.out.println("Failed to add stock.");
+                    }
                     break;
+
                 case "3":
-                    removeStock(listId, sc, stocklistModel);
+                    System.out.print("Enter stock symbol to remove: ");
+                    symbol = sc.nextLine().trim().toUpperCase();
+
+                    if (StocklistModel.removeStockFromList(listId, symbol)) {
+                        System.out.println("Stock removed successfully.");
+                    } else {
+                        System.out.println("Failed to remove stock.");
+                    }
                     break;
+
                 case "4":
+                    ReviewService.menu(userId, listId);
+                    break;
+
+                case "5":
+                    StocklistModel.showStatistics(listId, sc, stockModel);
+                    break;
+
+                case "6":
                     running = false;
                     break;
+
                 default:
                     System.out.println("Invalid choice.");
             }
-        }
-    }
-
-    private static void addStock(int listId, Scanner sc, StocklistModel stocklistModel) {
-        System.out.print("Enter stock symbol to add: ");
-        String symbol = sc.nextLine().trim().toUpperCase();
-
-        System.out.print("Enter number of shares: ");
-        double shares;
-        try {
-            shares = Double.parseDouble(sc.nextLine());
-            if (shares <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid number of shares.");
-            return;
-        }
-
-        if (stocklistModel.addStockToList(listId, symbol, shares)) {
-            System.out.println("Stock added successfully.");
-        } else {
-            System.out.println("Failed to add stock.");
-        }
-    }
-
-    private static void removeStock(int listId, Scanner sc, StocklistModel stocklistModel) {
-        System.out.print("Enter stock symbol to remove: ");
-        String symbol = sc.nextLine().trim().toUpperCase();
-
-        if (stocklistModel.removeStockFromList(listId, symbol)) {
-            System.out.println("Stock removed successfully.");
-        } else {
-            System.out.println("Stock not found in this list.");
         }
     }
 }

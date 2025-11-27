@@ -9,6 +9,8 @@
 /data/Java/pgsample/src/main/java/cs/toronto/edu/Menu.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/AuthService.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/TransactionsService.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/service/ReviewService.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/PortfolioService.java
+/data/Java/pgsample/src/main/java/cs/toronto/edu/model/ReviewModel.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/db/DBConnection.java
 /data/Java/pgsample/src/main/java/cs/toronto/edu/service/StocklistService.java

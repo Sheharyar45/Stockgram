@@ -53,7 +53,7 @@ public class Menu {
 
                 case "5":
                     System.out.println("Opening Stocklists...");
-                    StocklistService.menu(userId);
+                    StocklistService.menu(userId, stockModel);
                     break;
 
                 case "6":

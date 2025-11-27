@@ -19,3 +19,5 @@ cp model/StocklistModel.java pgsample/src/main/java/cs/toronto/edu/model/
 cp service/StocklistService.java pgsample/src/main/java/cs/toronto/edu/service/
 cp model/TransactionsModel.java pgsample/src/main/java/cs/toronto/edu/model/
 cp service/TransactionsService.java pgsample/src/main/java/cs/toronto/edu/service/
+cp service/ReviewService.java pgsample/src/main/java/cs/toronto/edu/service/
+cp model/ReviewModel.java pgsample/src/main/java/cs/toronto/edu/model/
