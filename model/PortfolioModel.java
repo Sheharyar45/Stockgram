@@ -462,4 +462,24 @@ public class PortfolioModel {
         stockModel.showStatistics(portfoliostocks, sc);
     }
 
+    public static void predictPrices(int portfolioId, Scanner sc, StockModel stockModel) {
+        viewHoldings(portfolioId, stockModel);
+        System.out.print("Enter stock symbol to view predictions: ");
+        String symbol = sc.nextLine().trim().toUpperCase();
+        
+        System.out.println("Enter the interval (e.g., 30d, 4w, 6m, 1y): ");
+        String interval = sc.nextLine().trim().toLowerCase();
+        if (!interval.matches("\\d+[dwmy]")) {
+            System.out.println("Invalid interval format.");
+            return;
+        }
+        int amount = Integer.parseInt(interval.substring(0, interval.length() - 1));
+        char unit = interval.charAt(interval.length() - 1);
+        int days = unit == 'd' ? amount :
+                   unit == 'w' ? amount * 7 :
+                   unit == 'm' ? amount * 30 :
+                   unit == 'y' ? amount * 365 : amount;
+        stockModel.predictPrices(symbol, days);
+
+    }
 }

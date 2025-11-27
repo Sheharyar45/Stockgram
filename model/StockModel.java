@@ -407,6 +407,109 @@ public class StockModel{
         }
     }
 
+    public void predictPrices(String symbol, int days) {
+        String query = "SELECT timestamp, close " +
+                       "FROM combined_data WHERE stock_symbol = ? ORDER BY timestamp ASC";
+        String latestDate = "Select MAX(timestamp) as max_date from combined_data WHERE stock_symbol = ?";
+        try (PreparedStatement stmt = this.conn.prepareStatement(query);
+             PreparedStatement latestDateStmt = this.conn.prepareStatement(latestDate)) {
+            stmt.setString(1, symbol);
+            latestDateStmt.setString(1, symbol);
+            try (ResultSet rs = stmt.executeQuery();
+                 ResultSet latestRs = latestDateStmt.executeQuery()) {
+                if (!rs.isBeforeFirst()) {
+                    System.out.println("No historical data found for stock: " + symbol);
+                    return;
+                }
+                Date maxDate = null;
+                if (latestRs.next()) {
+                    maxDate = latestRs.getDate("max_date");
+                }
+                List<Double> prices = new ArrayList<>();
+                while (rs.next()) {
+                    prices.add(rs.getDouble("close"));
+                }
+                if (prices.size() < 2) {
+                    System.out.println("Not enough data to make predictions for " + symbol);
+                    return;
+                }
+                predict(prices, days, maxDate);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void predict(List<Double> prices, int days, Date maxDate) {
+        int n = prices.size();
+
+        // Compute linear regression (slope + intercept), I found this formula online
+        double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (int i = 0; i < n; i++) {
+            double x = i;
+            double y = prices.get(i);
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumXX += x * x;
+        }
+
+        double slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        double intercept = (sumY - slope * sumX) / n;
+
+        // Step for sampling points (for large days), so that we dont get too many points if user chooses large days
+        int maxPoints = 50;
+        int step = Math.max(1, days / maxPoints);
+
+        List<Double> predictions = new ArrayList<>();
+        for (int i = n; i < n + days; i++) {
+            if ((i - n) % step == 0 || i == n + days - 1) {
+                predictions.add(slope * i + intercept);
+            }
+        }
+
+        printAsciiGraph(predictions, maxDate, step);
+    }
+
+    private void printAsciiGraph(List<Double> predictions, Date maxDate, int step) {
+        if (predictions.isEmpty()) {
+            System.out.println("No predictions to display.");
+            return;
+        }
+        
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        for (Double val : predictions) {
+            min = Math.min(min, val);
+            max = Math.max(max, val);
+        }
+
+        int width = 50;
+        System.out.println("\n--- Price Predictions ---");
+        System.out.printf("Min: $%.2f, Max: $%.2f%n", min, max);
+
+        int dayOffset = 1;
+        for (Double val : predictions) {
+            Date predictionDate = new Date(maxDate.getTime() + (long) dayOffset * 24 * 60 * 60 * 1000);
+            
+            int stars = (int) Math.round((val - min) / (max - min) * width);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < stars; i++) sb.append("*");
+
+            System.out.printf("%s | %-50s $%.2f%n", predictionDate.toString(), sb.toString(), val);
+            dayOffset += step;
+        }
+
+        System.out.print("\n\n\nSparkline: ");
+        for (Double val : predictions) {
+            int index = (int) Math.round((val - min) / (max - min) * 7);
+            char[] blocks = {'▁','▂','▃','▄','▅','▆','▇','█'};
+            System.out.print(blocks[Math.min(index, blocks.length - 1)]);
+        }
+        System.out.println();
+    }
+        
+
 
 
 }
