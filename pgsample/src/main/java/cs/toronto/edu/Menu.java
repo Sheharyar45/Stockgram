@@ -24,8 +24,7 @@ public class Menu {
             System.out.println("3. Portfolios");
             System.out.println("4. Transactions");
             System.out.println("5. Stocklists");
-            System.out.println("6. Reviews");
-            System.out.println("7. Logout");
+            System.out.println("6. Logout");
             System.out.print("Choose an option: ");
 
             String input = scanner.nextLine();
@@ -57,11 +56,6 @@ public class Menu {
                     break;
 
                 case "6":
-                    System.out.println("Opening Reviews...");
-                    // ReviewService.menu(userId);
-                    break;
-
-                case "7":
                     System.out.println("Logging out...");
                     loggedIn = false;
                     break;

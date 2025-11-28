@@ -277,28 +277,42 @@ public class StocklistModel {
         return results;
     }
 
-    public static boolean sendToFriend(int senderId, int receiverId, int stocklistId) {
-        String sql = "INSERT INTO requestreview (sender, receiver, stocklist_id) VALUES (?, ?, ?)";
+    public static boolean sendToFriend(int senderId, String receiverUsername, int stocklistId) {
+            String lookupSql = "SELECT user_id FROM users WHERE username = ?";
+            String insertSql = "INSERT INTO requestreview (sender, receiver, stocklist_id) VALUES (?, ?, ?)";
 
-        try (Connection conn = DBConnection.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            try (Connection conn = DBConnection.getConnection();
+                PreparedStatement lookupStmt = conn.prepareStatement(lookupSql)) {
 
-            stmt.setInt(1, senderId);
-            stmt.setInt(2, receiverId);
-            stmt.setInt(3, stocklistId);
-            stmt.executeUpdate();
-            System.out.println("Stocklist sent to friend successfully.");
-            return true;
+                lookupStmt.setString(1, receiverUsername);
+                ResultSet rs = lookupStmt.executeQuery();
 
-        } catch (Exception e) { // catch all checked exceptions
-            if (e instanceof SQLException sqlEx && sqlEx.getSQLState().equals("23505")) {
-                System.out.println("You have already sent this stocklist to this friend.");
-            } else {
-                e.printStackTrace();
+                if (!rs.next()) {
+                    System.out.println("No user found with username: " + receiverUsername);
+                    return false;
+                }
+
+                int receiverId = rs.getInt("user_id");
+
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                    insertStmt.setInt(1, senderId);
+                    insertStmt.setInt(2, receiverId);
+                    insertStmt.setInt(3, stocklistId);
+                    insertStmt.executeUpdate();
+                }
+
+                System.out.println("Stocklist sent successfully to " + receiverUsername);
+                return true;
+
+            } catch (Exception e) {
+                if (e instanceof SQLException sqlEx && sqlEx.getSQLState().equals("23505")) {
+                    System.out.println("You have already sent this stocklist to " + receiverUsername + ".");
+                } else {
+                    e.printStackTrace();
+                }
+                return false;
             }
-            return false;
         }
-    }
 
 
     public static List<Integer> getInvitedStocklists(int userId) {

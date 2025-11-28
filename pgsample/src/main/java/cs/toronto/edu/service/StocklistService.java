@@ -178,7 +178,6 @@ public class StocklistService {
                 System.out.println("7. Send to friend for review");
             }
             System.out.println("8. Back");
-
             System.out.print("Choose: ");
 
             String choice = sc.nextLine().trim();
@@ -248,16 +247,15 @@ public class StocklistService {
                         break;
                     }
 
-                    System.out.print("Enter friend's user ID: ");
-                    int friendId;
-                    try {
-                        friendId = Integer.parseInt(sc.nextLine().trim());
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid user ID.");
+                    System.out.print("Enter friend's username: ");
+                    String friendUsername = sc.nextLine().trim();
+
+                    if (friendUsername.isEmpty()) {
+                        System.out.println("Username cannot be empty.");
                         break;
                     }
 
-                    if (StocklistModel.sendToFriend(userId, friendId, listId)) {
+                    if (StocklistModel.sendToFriend(userId, friendUsername, listId)) {
                         System.out.println("Stocklist sent successfully.");
                     } else {
                         System.out.println("Failed to send stocklist.");
