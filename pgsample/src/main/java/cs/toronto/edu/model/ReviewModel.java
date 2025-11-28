@@ -33,8 +33,10 @@ public class ReviewModel {
         }
         if (visibility.equals("private")) {
             int owner = getStocklistOwner(stocklistId);
-            if (owner != userId) {
-                System.out.println("You cannot review a private stocklist you do not own.");
+
+            // owner or invited reviewer
+            if (owner != userId && !StocklistModel.isInvitedReviewer(userId, stocklistId)) {
+                System.out.println("You cannot review this private stocklist unless you are invited.");
                 return false;
             }
         }

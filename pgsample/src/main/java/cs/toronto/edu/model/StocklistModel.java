@@ -35,20 +35,16 @@ public class StocklistModel {
         return null;
     }
 
-    public static boolean stocklistExistsForUser(int userId, int listId) {
+    public static boolean isOwner(int userId, int stocklistId) {
         String sql = "SELECT 1 FROM stocklist WHERE stocklist_id = ? AND user_id = ?";
-
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, listId);
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, stocklistId);
             stmt.setInt(2, userId);
-
             ResultSet rs = stmt.executeQuery();
             return rs.next();
-
         } catch (Exception e) {
-            System.out.println("Error checking stocklist: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -109,7 +105,12 @@ public class StocklistModel {
         }
     }
 
-    public static boolean addStockToList(int stocklistId, String symbol, double shares, StockModel stockModel) {
+    public static boolean addStockToList(int userId, int stocklistId, String symbol, double shares, StockModel stockModel) {
+        if (!isOwner(userId, stocklistId)) {
+            System.out.println("Only the owner can modify this stocklist.");
+            return false;
+        }
+
         symbol = symbol.trim().toUpperCase();
         if (symbol.isEmpty() || shares <= 0) {
             System.out.println("Invalid stock symbol or number of shares.");
@@ -162,7 +163,12 @@ public class StocklistModel {
     }
 
 
-    public static boolean removeStockFromList(int stocklistId, String symbol) {
+    public static boolean removeStockFromList(int userId, int stocklistId, String symbol) {
+        if (!isOwner(userId, stocklistId)) {
+            System.out.println("Only the owner can modify this stocklist.");
+            return false;
+        }
+
         symbol = symbol.trim().toUpperCase();
         String sql = "DELETE FROM stocklistholdings WHERE stocklist_id = ? AND stock_symbol = ?";
 
@@ -214,10 +220,11 @@ public class StocklistModel {
     }
 
     public static boolean deleteStocklist(int userId, int stocklistId) {
-        if (!stocklistExistsForUser(userId, stocklistId)) {
-            System.out.println("Stocklist not found or does not belong to you.");
+        if (!isOwner(userId, stocklistId)) {
+            System.out.println("Only the owner can modify this stocklist.");
             return false;
         }
+
 
         String sql = "DELETE FROM stocklist WHERE stocklist_id = ?";
 
@@ -329,4 +336,38 @@ public class StocklistModel {
         }
     }
 
+    public static String getVisibility(int stocklistId) {
+        String sql = "SELECT visibility FROM stocklist WHERE stocklist_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, stocklistId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) 
+                return rs.getString("visibility");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void predictPrices(int stocklistId, Scanner sc, StockModel stockModel) {
+        viewStocksInList(stocklistId);
+        System.out.print("Enter stock symbol to view predictions: ");
+        String symbol = sc.nextLine().trim().toUpperCase();
+        
+        System.out.println("Enter the interval (e.g., 30d, 4w, 6m, 1y): ");
+        String interval = sc.nextLine().trim().toLowerCase();
+        if (!interval.matches("\\d+[dwmy]")) {
+            System.out.println("Invalid interval format.");
+            return;
+        }
+        int amount = Integer.parseInt(interval.substring(0, interval.length() - 1));
+        char unit = interval.charAt(interval.length() - 1);
+        int days = unit == 'd' ? amount :
+                unit == 'w' ? amount * 7 :
+                unit == 'm' ? amount * 30 :
+                unit == 'y' ? amount * 365 : amount;
+        stockModel.predictPrices(symbol, days);
+    }
 }

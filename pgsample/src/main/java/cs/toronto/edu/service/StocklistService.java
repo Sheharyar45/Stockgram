@@ -93,12 +93,35 @@ public class StocklistService {
             return;
         }
 
-        if (!StocklistModel.stocklistExistsForUser(userId, listId)) {
-            System.out.println("Stocklist not found or does not belong to you.");
+        boolean owner = StocklistModel.isOwner(userId, listId);
+        boolean invited = StocklistModel.isInvitedReviewer(userId, listId);
+        String visibility = StocklistModel.getVisibility(listId);
+
+        if (visibility == null) {
+            System.out.println("Stocklist not found.");
             return;
         }
 
-        stocklistMenu(listId, userId, stockModel, sc);
+        if (!owner) {
+            // Public is always open to view/review
+            if (visibility.equals("public")) {
+                System.out.println("Opening public stocklist (read-only).");
+                stocklistMenu(listId, userId, stockModel, sc, false);
+                return;
+            }
+
+            // Private but user is invited
+            if (invited) {
+                System.out.println("You are invited to review this private stocklist (read-only).");
+                stocklistMenu(listId, userId, stockModel, sc, false);
+                return;
+            }
+
+            System.out.println("You do not have access to this private stocklist.");
+            return;
+        }
+
+        stocklistMenu(listId, userId, stockModel, sc, true);
     }
 
     private static void deleteStocklist(int userId, Scanner sc) {
@@ -138,18 +161,24 @@ public class StocklistService {
 
 
     // Stocklist Menu
-    private static void stocklistMenu(int listId, int userId, StockModel stockModel, Scanner sc) {
+    private static void stocklistMenu(int listId, int userId, StockModel stockModel, Scanner sc, boolean allowManage) {
         boolean running = true;
 
         while (running) {
             System.out.println("\n===== STOCKLIST ACTIONS =====");
             System.out.println("1. View stocks in this list");
-            System.out.println("2. Add stock");
-            System.out.println("3. Remove stock");
+            if (allowManage) {
+                System.out.println("2. Add stock");
+                System.out.println("3. Remove stock");
+            }
             System.out.println("4. Manage reviews");
-            System.out.println("5. View predictions");
-            System.out.println("6. Send to friend for review");
-            System.out.println("7. Back");
+            System.out.println("5. View statistics");
+            System.out.println("6. View predictions");
+            if (allowManage) {
+                System.out.println("7. Send to friend for review");
+            }
+            System.out.println("8. Back");
+
             System.out.print("Choose: ");
 
             String choice = sc.nextLine().trim();
@@ -160,6 +189,11 @@ public class StocklistService {
                     break;
 
                 case "2":
+                    if (!allowManage) {
+                        System.out.println("You cannot modify a stocklist you do not own.");
+                        break;
+                    }
+
                     System.out.print("Enter stock symbol: ");
                     String symbol = sc.nextLine().trim().toUpperCase();
 
@@ -173,7 +207,7 @@ public class StocklistService {
                         break;
                     }
 
-                    if (StocklistModel.addStockToList(listId, symbol, shares, stockModel)) {
+                    if (StocklistModel.addStockToList(userId, listId, symbol, shares, stockModel)) {
                         System.out.println("Stock added successfully.");
                     } else {
                         System.out.println("Failed to add stock.");
@@ -181,10 +215,15 @@ public class StocklistService {
                     break;
 
                 case "3":
-                    System.out.print("Enter stock symbol to remove: ");
-                    symbol = sc.nextLine().trim().toUpperCase();
+                    if (!allowManage) {
+                        System.out.println("You cannot modify a stocklist you do not own.");
+                        break;
+                    }
 
-                    if (StocklistModel.removeStockFromList(listId, symbol)) {
+                    System.out.print("Enter stock symbol to remove: ");
+                    String symbolRemove = sc.nextLine().trim().toUpperCase();
+
+                    if (StocklistModel.removeStockFromList(userId, listId, symbolRemove)) {
                         System.out.println("Stock removed successfully.");
                     } else {
                         System.out.println("Failed to remove stock.");
@@ -200,6 +239,15 @@ public class StocklistService {
                     break;
 
                 case "6":
+                    StocklistModel.predictPrices(listId, sc, stockModel);
+                    break;
+
+                case "7":
+                    if (!allowManage) {
+                        System.out.println("You cannot send a stocklist you do not own.");
+                        break;
+                    }
+
                     System.out.print("Enter friend's user ID: ");
                     int friendId;
                     try {
@@ -216,7 +264,7 @@ public class StocklistService {
                     }
                     break;
                 
-                case "7":
+                case "8":
                     running = false;
                     break;
 
